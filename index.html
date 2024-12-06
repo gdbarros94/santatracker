@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Santa Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    #map { height: 100vh; }
+    .santa-icon { width: 40px; height: 40px; }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="map"></div>
+  <script>
+    const config = {
+      speed: 5200,
+      start: { lat: 75.186589, lng: -74.672401 },
+      startTime: new Date('December 06, 2024 18:00:00').getTime(),
+    };
+
+    const countries = [
+    { name: "Canada", lat: 56.1304, lng: -106.3468, population: 38000000 },
+    { name: "USA", lat: 37.0902, lng: -95.7129, population: 331000000 },
+    { name: "Mexico", lat: 23.6345, lng: -102.5528, population: 126000000 },
+    { name: "Brazil", lat: -14.235, lng: -51.9253, population: 214000000 },
+    { name: "Argentina", lat: -38.4161, lng: -63.6167, population: 45600000 },
+    { name: "Chile", lat: -35.6751, lng: -71.543, population: 19200000 },
+    { name: "United Kingdom", lat: 55.3781, lng: -3.436, population: 67800000 },
+    { name: "France", lat: 46.6034, lng: 1.8883, population: 67000000 },
+    { name: "Germany", lat: 51.1657, lng: 10.4515, population: 83100000 },
+    { name: "Italy", lat: 41.8719, lng: 12.5674, population: 59500000 },
+    { name: "Spain", lat: 40.4637, lng: -3.7492, population: 47000000 },
+    { name: "Turkey", lat: 38.9637, lng: 35.2433, population: 85000000 },
+    { name: "Egypt", lat: 26.8206, lng: 30.8025, population: 104000000 },
+    { name: "Saudi Arabia", lat: 23.8859, lng: 45.0792, population: 35000000 },
+    { name: "Iran", lat: 32.4279, lng: 53.688, population: 85000000 },
+    { name: "India", lat: 20.5937, lng: 78.9629, population: 1400000000 },
+    { name: "Bangladesh", lat: 23.685, lng: 90.3563, population: 167000000 },
+    { name: "Pakistan", lat: 30.3753, lng: 69.3451, population: 227000000 },
+    { name: "China", lat: 35.8617, lng: 104.1954, population: 1412000000 },
+    { name: "Vietnam", lat: 14.0583, lng: 108.2772, population: 98000000 },
+    { name: "Thailand", lat: 15.870, lng: 100.9925, population: 70000000 },
+    { name: "Philippines", lat: 12.8797, lng: 121.774, population: 111000000 },
+    { name: "South Korea", lat: 35.9078, lng: 127.7669, population: 52000000 },
+    { name: "Japan", lat: 36.2048, lng: 138.2529, population: 125800000 },
+    { name: "South Africa", lat: -30.5595, lng: 22.9375, population: 60000000 },
+    { name: "Nigeria", lat: 9.082, lng: 8.6753, population: 206000000 },
+    { name: "Ethiopia", lat: 9.145, lng: 40.4897, population: 120000000 },
+    { name: "Kenya", lat: -1.286389, lng: 36.817223, population: 53000000 },
+    { name: "Uganda", lat: 1.373333, lng: 32.290275, population: 47000000 },
+    { name: "Morocco", lat: 31.7917, lng: -7.0926, population: 37000000 },
+    { name: "Algeria", lat: 28.0339, lng: 1.6596, population: 44000000 },
+    { name: "Sudan", lat: 12.8628, lng: 30.2176, population: 46000000 },
+    { name: "Russia", lat: 61.524, lng: 105.3188, population: 144000000 },
+    { name: "Ukraine", lat: 48.3794, lng: 31.1656, population: 41000000 },
+    { name: "Colombia", lat: 4.5709, lng: -74.2973, population: 51000000 },
+    { name: "Venezuela", lat: 6.4238, lng: -66.5897, population: 28000000 },
+    { name: "Peru", lat: -9.19, lng: -75.0152, population: 33000000 },
+    { name: "Australia", lat: -25.2744, lng: 133.7751, population: 25600000 },
+    { name: "New Zealand", lat: -40.9006, lng: 174.886, population: 5000000 },
+    // Adicione mais países conforme necessário...
+];
+
+
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const santaIcon = L.icon({
+      iconUrl: 'santa.png',
+      iconSize: [40, 40],
+    });
+
+    const santaMarker = L.marker(config.start, { icon: santaIcon }).addTo(map);
+
+    function calculateTimeForCountry(population) {
+      const baseTime = 2; // Base time in minutes
+      const scalingFactor = 0.0001;
+      return baseTime + population * scalingFactor;
+    }
+
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371; // Radius of Earth in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function prepareJourney() {
+      const journey = [];
+      let currentLocation = config.start;
+
+      for (const country of countries) {
+        const distance = calculateDistance(currentLocation.lat, currentLocation.lng, country.lat, country.lng);
+        const travelTime = distance / config.speed; // Time in hours
+        journey.push({
+          name: country.name,
+          lat: country.lat,
+          lng: country.lng,
+          travelTime,
+        });
+        currentLocation = { lat: country.lat, lng: country.lng };
+      }
+
+      return journey;
+    }
+
+    function updateSantaPosition(journey) {
+      const now = new Date().getTime();
+      if (now < config.startTime) {
+        console.log('Ainda não começou a jornada');
+        requestAnimationFrame(() => updateSantaPosition(journey));
+        return;
+      }
+
+      const elapsedTime = (now - config.startTime) / 3600000; // Convert ms to hours
+      let cumulativeTime = 0;
+
+      for (let i = 0; i < journey.length; i++) {
+        cumulativeTime += journey[i].travelTime;
+
+        if (elapsedTime <= cumulativeTime) {
+          const prevStop = i === 0 ? 
+            { lat: config.start.lat, lng: config.start.lng, name: "Polo norte" } : 
+            journey[i - 1];
+          const nextStop = journey[i];
+
+          const timeAtStop = elapsedTime - (cumulativeTime - journey[i].travelTime);
+          const fraction = timeAtStop / journey[i].travelTime;
+
+          const lat = prevStop.lat + (fraction * (nextStop.lat - prevStop.lat));
+          const lng = prevStop.lng + (fraction * (nextStop.lng - prevStop.lng));
+
+          santaMarker.setLatLng([lat, lng]);
+          map.setView([lat, lng], 4);
+          
+          const currentStop = prevStop;
+          santaMarker.bindPopup(`
+            Papai Noel está em ${currentStop.name} indo para: ${nextStop.name}<br>
+            Progresso: ${Math.round(fraction * 100)}%
+          `).openPopup();
+          
+          break;
+        }
+      }
+
+      requestAnimationFrame(() => updateSantaPosition(journey));
+    }
+
+    const journey = prepareJourney();
+    updateSantaPosition(journey);
+
+    santaMarker.bindPopup('Papai Noel está se preparando!').openPopup();
+  </script>
+</body>
+</html>
